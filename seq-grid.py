@@ -43,24 +43,49 @@ def apply_colors(grid_dict, color_dict: dict):
         grid_dict[key]["color"] = color_dict[grid_dict[key]["seq_val"]]
     return grid_dict
 
+def add_spacing(grid_dict: dict, grid_dims: tuple, img_dims: tuple):
+    '''
+        Add spacing to the grid
+    '''
+
+    grid_x, grid_y = grid_dims
+    img_x, img_y = img_dims
+
+    print("grid Dims: ", grid_dims)
+    print("Img Dims: ", img_dims)
+    x_spacing = int(img_x / (2 + grid_x))
+    y_spacing = int(img_y / (2 + grid_y))
+
+    print("Spacing: ", x_spacing, y_spacing)
+
+    for key in grid_dict:
+        x1 = (key[0]+1) * x_spacing
+        y1 = (key[1]+1) * y_spacing
+
+        grid_dict[key]["coords"] = (x1, y1)
+    
+    return grid_dict
+
 def get_genbank_sequence(accession: str):
     pass
 
-def draw_grid(grid_dict: dict, dims: tuple, bk_color: str = "black"):
+def draw_grid(grid_dict: dict, dims: tuple, bkgd_color: str = "black"):
     '''
         Draws the grid
     '''
-    x, y = dims
 
-    img = Image.new('RGB', (x*100, y*100), color = bk_color) 
+    img = Image.new('RGB', dims, color = bkgd_color) 
     draw = ImageDraw.Draw(img)
 
     for key in grid_dict:
-        x1 = key[0]
-        y1 = key[1]
-        x2 = x1
-        y2 = y1
-        draw.rectangle([x1, y1, x2, y2], fill = grid_dict[key]["color"])
+        x1 = grid_dict[key]['coords'][0]
+        y1 = grid_dict[key]['coords'][1]
+        x2 = x1 + 10
+        y2 = y1 + 10
+        print(f"Coords calc: grid_dict[key]: {grid_dict[key]}, coords: {grid_dict[key]['coords']}")
+        #print("Drawing: ", x1, y1, x2, y2)
+        #draw.rectangle([x1, y1, x2, y2], fill = grid_dict[key]["color"])
+        draw.circle(((x1+x2)/2, (y1+y2)/2),radius=(x2-x1)/2, fill = grid_dict[key]["color"])
     
     img.show()
 
@@ -68,8 +93,9 @@ def draw_grid(grid_dict: dict, dims: tuple, bk_color: str = "black"):
 
 def main():
     # image dimensions
-    img_x = 1000
-    img_y = 1000
+    # can derive these from the idea factors
+    img_x = 100
+    img_y = 100  
     
     # image ratio
     x_ratio = 1
@@ -84,21 +110,27 @@ def main():
     seq = "ATGCGTACGATCGTAG"
     seq = "ATGTTCTCTCCAATTTTGTCCTTGGAAATTATTTTAGCTTTGGCTACTTTGCAATCTGTC"
 
+    #seq = open("Test Sequences\collagen.txt", "r").read().strip()
+    #seq = ''.join(filter(str.isalpha, seq))
+
     n = len(seq)
     
     x, y = find_ratio_factors(n, x_ratio, y_ratio)
-    print(f"X: {x}, Y: {y}")
+    #x, y = find_square_factors(n)
+    #print(f"X: {x}, Y: {y}")
     
     grid_dict = assemble_key((x,y), seq)
-    print(f"Grid Dict: {grid_dict}\n\n")
+    #print(f"Grid Dict: {grid_dict}\n\n")
 
     colored_grid_dict = apply_colors(grid_dict, color_dict)
-    print(f"Colored Grid Dict: {colored_grid_dict}")
+    #print(f"Colored Grid Dict: {colored_grid_dict}")
     
+    spaced_grid_dict = add_spacing(colored_grid_dict, (x,y), (img_x, img_y))
+    print("Spaced Grid Dict: ", spaced_grid_dict[(0,0)], spaced_grid_dict[(2,2)])
 
+    draw_grid(spaced_grid_dict, (img_x, img_y))
 
-    img = draw_grid(colored_grid_dict, (img_x, img_y))
-
+    #img.show()
     pass
 
 
