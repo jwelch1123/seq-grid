@@ -61,18 +61,24 @@ def add_spacing(grid_dict: dict, grid_dims: tuple, img_dims: tuple):
     
     return grid_dict
 
-def bottom_up(grid_dict: dict, shape_pad: int, ext_margin: int):
+def bottom_up(dims: tuple, seq: list, shape_size: int, shape_pad: int, ext_margin: int):
     '''
-        Generate image coords and add them to the grid
+        Fully assembly of the shape grid in 1 pass without lookups. 
     '''
 
-    for key in grid_dict:
-        shape_size = grid_dict[key]["shape_size"]
-        x1 = ext_margin + (key[0] * (shape_size + shape_pad))
-        y1 = ext_margin + (key[1] * (shape_size + shape_pad))
+    grid_dict = {}
+    for i, val in enumerate(seq):
+        x = i % dims[0]
+        y = i // dims[0]
+        
+        x_coord = ext_margin + (x * (shape_size + shape_pad))
+        y_coord = ext_margin + (y * (shape_size + shape_pad))
 
-        grid_dict[key]["coords"] = (x1, y1)
-    
+        grid_dict[(x, y)] = {"seq_val": val, 
+                             "shape_size": shape_size, 
+                             "coords":(x_coord, y_coord)
+                             }
+
     return grid_dict
 
 def get_genbank_sequence(accession: str):
@@ -118,58 +124,53 @@ def draw_grid(grid_dict: dict, dims: tuple, color_dict: dict, bkgd_color: str = 
 
 def main():
 
-    #seq = get_genbank_sequence("NC_000913.3")
-    #DNA_color_dict = {"A": "#FF0000", "T": "#FFFF00", "C": "#0000FF", "G": "#008000"}
-    #prot_color_dict = {}
-    color_dict = {"A": "Green", "T": "Red", "C": "Orange", "G": "Blue"}
     seq = "ATGCGTACGATCGTAG"
     seq = "ATGTTCTCTCCAATTTTGTCCTTGGAAATTATTTTAGCTTTGGCTACTTTGCAATCTGTC"
 
+    #seq = get_genbank_sequence("NC_000913.3")
     #seq = read_txt("Test Sequences\collagen.txt")
-    seq = read_txt("Test Sequences\CoVid-19.txt")
+    #seq = read_txt("Test Sequences\CoVid-19.txt")
+    seq = read_txt("Test Sequences\Truncated_100k_refChromo1.txt")
     #seq = read_txt("Test Sequences/NC_000001.11[77458449..201936659].fa")
 
     print("*"*50 + "\n" + f"Sequence length: {len(seq)}" + "\n")
-
-    # image dimensions
-    # can derive these from the idea factors
-    img_x = 100
-    img_y = 100  
     
     # image ratio
-    x_ratio = 5
+    x_ratio = 1
     y_ratio = 1
 
     shape_size = 10 
     shape_pad = 2
     ext_margin = 10
 
+
     x, y = find_ratio_factors(len(seq), x_ratio, y_ratio)
     #x, y = find_square_factors(len(seq))
     
-    print("*"*50 + "\n" + f"X, Y: {x},{y}" + "\n")
-
+    print("*"*50 + "\n" + f"X, Y: {x},{y}")
 
     # image dimensions, something is wrong here, Padding added to top but not bottom?
     img_x =  (x * shape_size) + ((x-1) * shape_pad) + (2 * ext_margin)
     img_y =  (y * shape_size) + ((y-1) * shape_pad) + (2 * ext_margin)
 
-    print("*"*50 + "\n" + f"Img Dims: {img_x},{img_y}" + "\n")
+    print("*"*50 + "\n" + f"Img Dims: {img_x},{img_y}")
 
+    #prot_color_dict = {}
+    color_dict = {"A": "Green", "T": "Red", "C": "Orange", "G": "Blue"}
+   
+    #import time
+    #print("Time:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
-    grid_dict = assemble_key((x,y), seq, **{"shape_size": shape_size})
+    spaced_grid_dict = bottom_up((x,y), seq, shape_size, shape_pad, ext_margin)
 
-    print("*"*50 + "\n" + f"Assembled key: {grid_dict[(0,0)]}" + "\n")
-
-
-    #spaced_grid_dict = add_spacing(grid_dict, (x,y), (img_x, img_y))
-    spaced_grid_dict = bottom_up(grid_dict, shape_pad, ext_margin)
-
-    print("*"*50 + "\n" + f"Spaced key: {spaced_grid_dict[(0,0)]}" + "\n")
-
+    #print("*"*50 + "\n" + f"Spaced key: {spaced_grid_dict[(0,0)]}")
+    #print("Time:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    
     img = draw_grid(spaced_grid_dict, (img_x, img_y), color_dict)
-
-    #img.save("./in progress/covid_19.png")
+    
+    #print("Time:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    
+    #img.save("./in progress/____.png")
 
     #img.show()
     pass
