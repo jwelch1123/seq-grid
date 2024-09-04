@@ -1,4 +1,5 @@
 from PIL import Image, ImageDraw
+import time
 
 def find_square_factors(n):
     '''
@@ -27,40 +28,6 @@ def find_ratio_factors(n: int, x:int, y:int):
 
     return x * scale_factor, y * scale_factor 
 
-def assemble_key(dims: tuple, seq: list, **kwargs):
-    '''
-        package sequence into a dictionary with the keys being the coordinates of the grid
-    '''
-    grid_dict = {}
-    for i, val in enumerate(seq):
-        x = i % dims[0]
-        y = i // dims[0]
-        grid_dict[(x, y)] = {"seq_val": val, **kwargs}
-    return grid_dict
-
-def add_spacing(grid_dict: dict, grid_dims: tuple, img_dims: tuple):
-    '''
-        Add spacing to the grid
-    '''
-
-    grid_x, grid_y = grid_dims
-    img_x, img_y = img_dims
-
-    #print("grid Dims: ", grid_dims)
-    #print("Img Dims: ", img_dims)
-    x_spacing = int(img_x / (2 + grid_x))
-    y_spacing = int(img_y / (2 + grid_y))
-
-    #print("Spacing: ", x_spacing, y_spacing)
-
-    for key in grid_dict:
-        x1 = (key[0]+1) * x_spacing
-        y1 = (key[1]+1) * y_spacing
-
-        grid_dict[key]["coords"] = (x1, y1)
-    
-    return grid_dict
-
 def bottom_up(dims: tuple, seq: list, shape_size: int, shape_pad: int, ext_margin: int):
     '''
         Fully assembly of the shape grid in 1 pass without lookups. 
@@ -68,6 +35,10 @@ def bottom_up(dims: tuple, seq: list, shape_size: int, shape_pad: int, ext_margi
 
     grid_dict = {}
     for i, val in enumerate(seq):
+        if i % 10000000 == 0: 
+            print(f"Hit: {i/1000000}M")
+            print("Time:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+
         x = i % dims[0]
         y = i // dims[0]
         
@@ -130,11 +101,13 @@ def main():
     #seq = get_genbank_sequence("NC_000913.3")
     #seq = read_txt("Test Sequences\collagen.txt")
     #seq = read_txt("Test Sequences\CoVid-19.txt")
-    seq = read_txt("Test Sequences\Truncated_100k_refChromo1.txt")
+    #seq = read_txt("Test Sequences\Truncated_100k_refChromo1.txt")
+    seq = read_txt("Test Sequences\Truncated_10M_refChromo1.txt")
     #seq = read_txt("Test Sequences/NC_000001.11[77458449..201936659].fa")
 
     print("*"*50 + "\n" + f"Sequence length: {len(seq)}" + "\n")
-    
+
+
     # image ratio
     x_ratio = 1
     y_ratio = 1
@@ -158,19 +131,20 @@ def main():
     #prot_color_dict = {}
     color_dict = {"A": "Green", "T": "Red", "C": "Orange", "G": "Blue"}
    
-    #import time
-    #print("Time:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    print("Time:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
     spaced_grid_dict = bottom_up((x,y), seq, shape_size, shape_pad, ext_margin)
 
     #print("*"*50 + "\n" + f"Spaced key: {spaced_grid_dict[(0,0)]}")
+    print("Time:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    
+    img = draw_grid(spaced_grid_dict, (img_x, img_y), color_dict) # forgot to implement shape size
+
+    print("Time:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+
     #print("Time:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
     
-    img = draw_grid(spaced_grid_dict, (img_x, img_y), color_dict)
-    
-    #print("Time:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-    
-    #img.save("./in progress/____.png")
+    #img.save("./in progress/human_ref_chromosome1.png")
 
     #img.show()
     pass
