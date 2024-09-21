@@ -1,0 +1,6 @@
+pillow
+BIO
+python-dotenv
+gunicorn
+dash
+dash-bootstrap-components

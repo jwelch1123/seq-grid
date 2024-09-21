@@ -1,2 +1,4 @@
 # Human Reference Choromosome 1 to stress test the program
 Test Sequences\NC_000001.11[77458449..201936659].fa
+.env
+.venv
